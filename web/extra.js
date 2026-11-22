@@ -63,7 +63,8 @@ const X = (() => {
     if (f.k === 'kpi' || f.k === 'guide') { const t = (f.ticker || '').toUpperCase(); ((S.kpis ||= {})[t] ||= []).push(f); return null; }
     if (f.k === 'named') {
       (S.named ||= []).push(f);
-      if (f.rel === 'other' || (f.strength || 1) < 2) return null;
+      // only real ties join the map; passing mentions and loose partner/investor links stay in the Who-names-it list
+      if (f.rel === 'other' || (f.strength || 1) < 2 || ((f.rel === 'partner' || f.rel === 'investor') && (f.strength || 1) < 3)) return null;
       return { k: 'company', name: f.name, ticker: f.ticker || null, rel: f.rel === 'investor' ? 'partner' : f.rel, q: f.q };
     }
     if (f.k === 'chain') {

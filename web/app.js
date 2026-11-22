@@ -610,6 +610,20 @@ function agentsTool(tool, text) {
   return el;
 }
 function agentsSpawn(e) {
+  // waves that arrive in batches (who names it, value chain, index what-if) fill one group instead of one per batch
+  const last = AG.groups[AG.groups.length - 1];
+  if (last && last.kind && last.kind === e.kind && ['named', 'chain', 'indexshock'].includes(e.kind) && last.wave === (e.wave || 1)) {
+    const rows = last.querySelector('.ag-rows'), base = last.ids.length;
+    e.agents.forEach((a, i) => {
+      const r = document.createElement('div'); r.className = 'ag-row queued';
+      r.innerHTML = `<i></i><span class="l">${esc(a.label || a.id)}</span><span class="b"><em></em></span><span class="n">0</span>`;
+      r.onclick = () => agentModal(a.id); rows.appendChild(r); AG.rows.set(a.id, r);
+    });
+    last.ids.push(...e.agents.map(a => a.id));
+    if (last.ids.length > 12) rows.classList.add('two');
+    const b = last.querySelector('.ag-ghead b'); if (b) b.innerHTML = b.innerHTML.replace(/\d+ sub-agents/, `${last.ids.length} sub-agents`);
+    return;
+  }
   for (const g of AG.groups) g.classList.add('collapsed');
   const g = document.createElement('div'); g.className = 'ag-group';
   const n = e.agents.length;
@@ -628,7 +642,7 @@ function agentsSpawn(e) {
   g.querySelector('.ag-ghead').onclick = () => groupModal(g);
   g.querySelector('.ag-sum').onclick = () => groupModal(g);
   rows.querySelectorAll('.ag-row').forEach((r, i) => r.onclick = () => agentModal(e.agents[i].id));
-  AG.groups.push(g); g.wave = e.wave || 1; g.ids = e.agents.map(a => a.id);
+  AG.groups.push(g); g.wave = e.wave || 1; g.kind = e.kind || null; g.ids = e.agents.map(a => a.id);
   AG.el.scrollTop = AG.el.scrollHeight;
 }
 function agentsTick() {
@@ -1124,6 +1138,15 @@ function groupOf(n) {
   return GROUPS[n.cl] ? n.cl : null;
 }
 const REVEAL_MS = 110;
+// how many tiles a group shows in the All view (2 columns at the sides, 2 rows on top and bottom); the rest sit behind "+N more"
+const CAP_SIDE = 10, CAP_TB = 10;
+// which tiles earn a place: what-if hits, stated revenue shares, cross-links, mentions in the company's own filing, tickers;
+// companies known only because another filing named them rank last
+function tileScore(n) {
+  return (n.impact ? 60 + 10 * (n.impact.severity || 1) : 0) + (n.route ? 80 : 0) + (n.pct ? 40 + n.pct : 0) + (n.confirms ? 25 : 0) + (n.links?.size || 0) * 6
+    + Math.min(40, (n.mentions || 0) * 4) + (n.ticker ? 8 : 0) + (n.enriched ? 12 : 0) + (n.chain ? 6 * (n.chain.exposure || 1) : 0)
+    + (n.namedBy ? (n.namedBy.strength || 1) * 5 - ((n.mentions || 0) <= 1 ? 30 : 0) : 0) - (n.inferred && n.confirm?.supports !== 'yes' ? 10 : 0);
+}
 function layout(now) {
   const lists = { supplier: [], customer: [], competitor: [], partner: [] };
   for (const n of S.nodes) { const g = groupOf(n); if (g && n.seq == null) { n.seq = S.seq++; (S.revealQ ||= []).push(n); } }
@@ -1131,23 +1154,33 @@ function layout(now) {
   if (S.phase === 'done' && S.revealQ?.length > 3) { for (const n of S.revealQ) n.revealed = true; S.revealQ = []; }
   for (const n of S.nodes) { const g = groupOf(n); if (g && n.revealed) lists[g].push(n); }
   const tiles = [];
-  for (const [g, list] of Object.entries(lists)) {
-    list.sort((a, b) => a.seq - b.seq);
+  for (const [g, all] of Object.entries(lists)) {
     const G = GROUPS[g];
+    if (!all.length) { G.count = 0; G.items = []; G.hidden = 0; continue; }
+    const cap = FILTER === g ? Infinity : (G.side === 'left' || G.side === 'right' ? CAP_SIDE : CAP_TB);
+    let list = all;
+    if (all.length > cap) list = [...all].sort((a, b) => tileScore(b) - tileScore(a) || a.seq - b.seq).slice(0, cap - 1);
+    list.sort((a, b) => a.seq - b.seq);
     const items = list.map(n => ({ n }));
-    if (!list.length) { G.count = 0; G.items = []; continue; }
-    G.count = list.length; G.items = items;
+    G.hidden = all.length - list.length;
+    if (G.hidden) { G.moreItem ||= { g }; G.moreItem.more = G.hidden; G.moreItem.n = null; items.push(G.moreItem); }
+    G.count = all.length; G.items = items;
+    // the All view is compact (one column per side, closer to the card); a group's own view spreads out
+    const compact = FILTER === 'all';
+    const SX = compact ? 330 : 450;
+    G.hub.x = G.side === 'left' ? -(compact ? 250 : 340) : G.side === 'right' ? (compact ? 250 : 340) : 0;
     if (G.side === 'left' || G.side === 'right') {
       // as many columns as needed, growing outward from the hub, 12 tiles per column
-      const PER = 12, ncol = Math.ceil(items.length / PER);
+      // a group's own view: taller columns for big groups, so it stays readable (62 customers = 4 columns of 16)
+      const PER = compact ? 10 : Math.max(12, Math.min(20, Math.ceil(items.length / 4))), ncol = Math.ceil(items.length / PER);
       items.forEach((it, i) => {
         const c = Math.floor(i / PER), inCol = Math.min(PER, items.length - c * PER), r = i % PER;
         const tot = inCol * (TH + TG) - TG;
-        it.x = G.side === 'left' ? -450 - TW - c * (TW + 12) : 450 + c * (TW + 12);
+        it.x = G.side === 'left' ? -SX - TW - c * (TW + 12) : SX + c * (TW + 12);
         it.y = -tot / 2 + r * (TH + TG); it.w = TW; it.h = TH;
       });
     } else {
-      const cols = Math.min(7, Math.max(1, items.length)), rows = Math.ceil(items.length / cols);
+      const cols = Math.min(compact ? 5 : 7, Math.max(1, items.length)), rows = Math.ceil(items.length / cols);
       const wtot = cols * (GW + 8) - 8, x0 = -wtot / 2;
       items.forEach((it, i) => {
         const c = i % cols, r = Math.floor(i / cols);
@@ -1308,7 +1341,7 @@ function drawTile(t, now, px) {
   ctx.globalAlpha = a;
   if (t.more) {
     ctx.fillStyle = '#0c0f11'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#26323a'; ctx.lineWidth = px; ctx.strokeRect(x, y, w, h);
-    ctx.font = `500 ${11.5}px Geist, sans-serif`; ctx.fillStyle = '#9fb3ba'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`+${t.more} more`, x + w / 2, y + h / 2);
+    ctx.font = `500 ${11.5}px Geist, sans-serif`; ctx.fillStyle = '#9fb3ba'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`+${t.more} more · show all`, x + w / 2, y + h / 2);
     ctx.globalAlpha = 1; return;
   }
   const n = t.n, g = groupOf(n), dim = (FILTER !== 'all' && FILTER !== g) || (S.whatif && !S.streamMode && !n.impact);
@@ -1659,7 +1692,7 @@ async function loadFA(tk) {
 cv.addEventListener('click', ev => {
   const hit = pickTile(ev.clientX, ev.clientY);
   if (hit?.n) { S.selected = hit.n; companyModal(hit.n); return; }
-  if (hit?.more) { hubModal(hit.g); return; }
+  if (hit?.more) { setFilter(hit.g); return; }
   if (hit?.hub) { hubModal(hit.hub); return; }
   if (FILTER !== 'all') setFilter('all');
 });
