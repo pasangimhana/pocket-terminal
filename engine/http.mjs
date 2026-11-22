@@ -97,6 +97,25 @@ export async function handle(req, res, { prefix = '', mode = 'scripted' } = {}) 
         throw e;
       }
     }
+    // Investigate one company on the map (wave 17), and per-company news tagged good / bad (works on any map)
+    if (p === '/api/investigate') {
+      const nm = (url.searchParams.get('name') || '').trim();
+      if (!nm) return send(res, 400, { error: 'name required' });
+      try {
+        const s = await (await import('./investigate.mjs')).investigateAsk(nm, (url.searchParams.get('ticker') || '').trim().toUpperCase() || null, mode, { quotes: url.searchParams.getAll('q').filter(Boolean).slice(0, 3) });
+        return send(res, 200, { ok: true, name: nm, ticker: s.meta?.ticker ?? null, mode });
+      } catch (e) {
+        if (e.code === 'BUSY') return send(res, 409, { error: e.message });
+        if (e.code === 'NOMAP' || e.code === 'BAD') return send(res, 400, { error: e.message });
+        throw e;
+      }
+    }
+    if (p === '/api/companynews') {
+      const nm = (url.searchParams.get('name') || '').trim();
+      if (!nm) return send(res, 400, { error: 'name required' });
+      try { return send(res, 200, await (await import('./investigate.mjs')).companyNews({ name: nm, ticker: url.searchParams.get('ticker') || '', root: url.searchParams.get('root') || '', fresh: url.searchParams.get('fresh') === '1' })); }
+      catch (e) { return send(res, 422, { error: String(e.message || e) }); }
+    }
     if (p === '/api/profile') {
       try {
         const tk = url.searchParams.get('ticker'), nm = url.searchParams.get('name');

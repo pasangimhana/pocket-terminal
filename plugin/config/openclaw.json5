@@ -46,7 +46,7 @@
       },
     },
   },
-  tools: { toolSearch: false, profile: "minimal", alsoAllow: ["terminal_scan", "terminal_spawn", "terminal_expand", "terminal_news", "terminal_profiles", "terminal_resolve", "terminal_private", "terminal_whatif", "terminal_named", "terminal_changes", "terminal_earnings", "terminal_commodity", "terminal_indexshock", "terminal_wire"] },
+  tools: { toolSearch: false, profile: "minimal", alsoAllow: ["terminal_scan", "terminal_spawn", "terminal_expand", "terminal_news", "terminal_profiles", "terminal_resolve", "terminal_private", "terminal_whatif", "terminal_named", "terminal_changes", "terminal_earnings", "terminal_investigate", "terminal_commodity", "terminal_indexshock", "terminal_wire"] },
   cron: { enabled: false },
   // Don't advertise this second Gateway on the LAN (mDNS) next to the default one.
   // pocket-terminal reads llm_output (the agent's text between tool calls) for the page's trajectory view

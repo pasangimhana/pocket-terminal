@@ -28,13 +28,14 @@ const X = (() => {
     named: { label: 'Who names you', icon: 'users', sub: 'Every annual report that names it, one agent each' },
     changes: { label: 'What changed', icon: 'alert', sub: 'This 10-K vs last year’s' },
     earnings: { label: 'Earnings', icon: 'hash', sub: 'KPIs from the latest press releases' },
+    investigate: { label: 'Investigate', icon: 'target', sub: 'Enrich one company', perCompany: true },
   };
-  const WORK = { named: 'Names it', changes: 'Year over year', earnings: 'Earnings release', chain: 'Value chain', indexshock: 'Index what-if' };
-  const GROUP_WORK = { named: 'annual reports that name it', changes: 'new and dropped paragraphs', earnings: 'earnings releases', chain: 'annual reports on it', indexshock: 'index members' };
+  const WORK = { investigate: 'Investigate', named: 'Names it', changes: 'Year over year', earnings: 'Earnings release', chain: 'Value chain', indexshock: 'Index what-if' };
+  const GROUP_WORK = { investigate: 'investigating one company', named: 'annual reports that name it', changes: 'new and dropped paragraphs', earnings: 'earnings releases', chain: 'annual reports on it', indexshock: 'index members' };
   const NO_TARGET = new Set([11, 12, 14, 16]);
   function spawnText(N, e) {
     const c = S.scan?.name || 'it';
-    return { 11: `${N} agents reading annual reports that name ${c}`, 12: `${N} agents comparing this year's annual report with last year's`, 13: `${N} agents reading the latest earnings releases`, 14: `${N} agents placing every company in the ${c.toLowerCase()} value chain`, 16: `${N} agents running the what-if across the index` };
+    return { 17: `${N} agents investigating ${e.target || 'a company'}`, 11: `${N} agents reading annual reports that name ${c}`, 12: `${N} agents comparing this year's annual report with last year's`, 13: `${N} agents reading the latest earnings releases`, 14: `${N} agents placing every company in the ${c.toLowerCase()} value chain`, 16: `${N} agents running the what-if across the index` };
   }
   async function runStream(kind) {
     if (!S.root || REPLAY) return;
@@ -57,6 +58,7 @@ const X = (() => {
   // ---------- findings from the new waves ----------
   const STAGE_REL = { producer: 'supplier', refiner: 'supplier', shipper: 'partner', consumer: 'customer', hedger: 'competitor' };
   function mapFinding(f, e, a, now) {
+    if (f.k === 'enrich' || f.k === 'source' || f.k === 'lead') { window.PTInvestigate?.onFinding?.(f, e, a); return null; }
     if (f.k === 'change') { (S.changes ||= []).push(f); return null; }
     if (f.k === 'kpi' || f.k === 'guide') { const t = (f.ticker || '').toUpperCase(); ((S.kpis ||= {})[t] ||= []).push(f); return null; }
     if (f.k === 'named') {
@@ -76,6 +78,7 @@ const X = (() => {
     if (f.k === 'chain') { node.chain = { stage: f.stage, exposure: f.exposure, sens: f.margin_bps_per_10pct, routes: f.routes || [], detail: f.detail }; node.desc ||= f.detail; }
   }
   function tileInfo(n) {
+    if (n.enriched?.what) return n.enriched.what;
     if (isCommodity() && n.chain) {
       if (S.scenario) { const bps = Math.round((n.chain.sens || 0) * S.scenario / 10); return `${S.scan.name} ${sgn(S.scenario, 0)}% → op. margin ${bps > 0 ? '+' : ''}${bps} bps`; }
       return `${cap1(n.chain.stage)} · ${n.chain.detail || ''}`;
@@ -247,7 +250,7 @@ const X = (() => {
     const done = k => ({ named: S.named?.length, changes: S.changes?.length, earnings: S.kpis && Object.keys(S.kpis).length })[k];
     const btn = (k) => `<button class="xs" data-stream="${k}" ${S.phase !== 'done' ? 'disabled' : ''}>${ic(STREAMS[k].icon)}<b>${STREAMS[k].label}</b><span>${done(k) ? 'done ✓' : STREAMS[k].sub}</span></button>`;
     const tools = [['insiders', 'Insiders', 'Form 4'], ['holders', 'Holders', '13F'], ['contracts', 'Gov contracts', 'USASpending'], ['ripple', 'Earnings ripple', 'who moves'], ['hidden', 'Hidden links', 'stocks that co-move'], ['patents', 'Patents', 'tech overlap'], ['compare', 'Compare', 'side by side'], ['note', 'Analyst note', 'PNG / PDF']];
-    return `<div class="card blk xs-blk"><h4>Agent streams <span>new waves on this map</span></h4><div class="xs-g">${Object.keys(STREAMS).map(btn).join('')}</div><div class="xt-g">${tools.map(([k, t, s]) => `<button class="xt" data-tool="${k}"><b>${t}</b><span>${s}</span></button>`).join('')}</div></div>`;
+    return `<div class="card blk xs-blk"><h4>Agent streams <span>new waves on this map</span></h4><div class="xs-g">${Object.keys(STREAMS).filter(k => !STREAMS[k].perCompany).map(btn).join('')}</div><div class="xt-g">${tools.map(([k, t, s]) => `<button class="xt" data-tool="${k}"><b>${t}</b><span>${s}</span></button>`).join('')}</div></div>`;
   }
   function sideBlocks(parts) {
     const eco = parts.findIndex(p => p.includes('data-open="eco"'));
@@ -411,11 +414,11 @@ const X = (() => {
     const worst = (Rg.companies || []).filter(c => c.usd).sort((a, b) => a.usd - b.usd).slice(0, 5);
     return `<div class="xringw">${svg}<div class="xrgs"><h6>Shock rings · ~$ revenue at stake over 12 months</h6>${rows}${worst.length ? `<div class="xm">Biggest $ hits: ${worst.map(c => `${esc(c.ticker || c.name)} ~${usd(c.usd)}`).join(' · ')}</div>` : ''}</div></div>`;
   }
-  function streamResults(kind) { ({ named: namedModal, changes: changesModal, earnings: earnModal })[kind]?.(); }
+  function streamResults(kind) { if (kind === 'investigate') return window.PTInvestigate?.results?.(); ({ named: namedModal, changes: changesModal, earnings: earnModal })[kind]?.(); }
 
   // ---------- company popup extras ----------
   function companyExtra(n) {
-    let html = '';
+    let html = window.PTInvestigate?.section ? PTInvestigate.section(n) : '';
     if (n.namedBy) html += `<div class="xnb">${ic('link')} <b>Its own ${esc(n.namedBy.form || 'annual report')}</b> names ${esc(S.scan?.ticker || '')} as its ${esc(n.namedBy.rel === 'customer' ? 'supplier' : n.namedBy.rel === 'supplier' ? 'customer' : n.namedBy.rel)} ${sevBars(n.namedBy.strength)}${n.namedBy.q ? `<div class="fq2">“${esc(n.namedBy.q)}” ${n.namedBy.url ? `<a href="${esc(n.namedBy.url)}" target="_blank" rel="noopener">filing ↗</a>` : ''}</div>` : ''}</div>`;
     if (n.chain) html += `<div class="xnb">${ic('truck')} <b>${esc(cap1(n.chain.stage))}</b> in the ${esc((S.scan?.name || '').toLowerCase())} value chain · exposure ${sevBars(n.chain.exposure)} · ${n.chain.sens ? `${n.chain.sens > 0 ? '+' : ''}${n.chain.sens} bps op. margin per +10% price` : 'no margin estimate'}${n.chain.routes?.length ? ` · routes: ${n.chain.routes.map(esc).join(', ')}` : ''}</div>`;
     if (n.route) html += `<div class="xnb">${ic('globe')} <b>Shipping chokepoint</b> · ${esc(routeLine(n.route))}${routeSource(n.route) ? ` <span class="dim">(${esc(routeSource(n.route))})</span>` : ''}<div class="lcs">${S.nodes.filter(o => o.chain?.routes?.some(r => sameRoute(r, n.name))).map(o => chip(o.name, { ticker: o.ticker, node: o })).join('')}</div></div>`;
@@ -449,6 +452,7 @@ const X = (() => {
   }
   function wireCompany(n) {
     const m = $('#modal'); if (!m) return;
+    window.PTInvestigate?.wire?.(n, m);
     m.querySelectorAll('[data-xtab]').forEach(b => b.onclick = () => { n._xtab = n._xtab === b.dataset.xtab ? null : b.dataset.xtab; companyModal(n, true); });
     m.querySelector('[data-xshared]')?.addEventListener('click', async ev => {
       const box = m.querySelector('.xshared'); box.innerHTML = `<div class="pf-load">${spin}Matching holders across the map…</div>`;

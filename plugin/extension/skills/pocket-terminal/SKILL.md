@@ -53,6 +53,7 @@ sentences from the tool's result:
 - "Who names X" / "who are X's real customers": `terminal_named`.
 - "What changed this year": `terminal_changes`.
 - "Earnings" / "KPIs": `terminal_earnings`.
+- "Investigate X" / "who is X" / "dig into Customer A" on a company already on the map: `terminal_investigate` once with `name` (and `ticker` if given). It reads several sources and enriches that tile; do not scan or spawn again.
 
 ## Commodities
 

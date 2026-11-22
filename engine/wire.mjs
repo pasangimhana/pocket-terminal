@@ -794,3 +794,6 @@ export async function handle(req, res, p, url, { mode } = {}) {
     return send(e.code === 'NOKEY' ? 400 : 500, { error: String(e.message || e) });
   }
 }
+
+// Feed helpers reused by engine/investigate.mjs (per-company news).
+export const feedTools = { parseRss, webFetch };

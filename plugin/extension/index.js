@@ -213,6 +213,20 @@ async function namedTool(_id, raw) {
   ].filter(Boolean).join("\n"), { agents: r.agents });
 }
 
+async function investigateTool(_id, raw) {
+  const name = String(raw?.name || "").trim();
+  if (!name) throw new Error("name is required");
+  const inv = await loadEngine("investigate.mjs");
+  const r = await inv.investigate({ name, ticker: raw?.ticker ? String(raw.ticker) : undefined });
+  return text([
+    `Investigated ${r.target}${r.ticker ? ` (${r.ticker})` : ""}: ${r.agents} agents read ${r.sources} sources.`,
+    r.what ? `It is: ${r.what}.` : "The synthesis agent returned nothing.",
+    r.relationship ? `Tie to the mapped company: ${r.relationship}.` : "",
+    r.leads ? `${r.leads} newly connected companies were added to the map.` : "",
+    ANSWER,
+  ].filter(Boolean).join("\n"), { agents: r.agents });
+}
+
 async function changesTool() {
   const r = await (await streams()).changes();
   if (!r.agents) return text(`No comparison: ${r.note || "no earlier annual report"}. ${ANSWER}`);
@@ -369,6 +383,13 @@ const TOOLS = [
     description: "On a mapped company: SEC full-text search finds every annual report filed this year that names it (about 160 for NVIDIA), and one sub-agent per filing reads the paragraphs that mention it to say whether that filer is a customer, supplier, competitor, partner or investor. Finds real customers that the company's own filing leaves anonymous.",
     parameters: { type: "object", properties: { max: { type: "integer", minimum: 10, maximum: 200, description: "Cap on filings to read (default 200). Only if the user asked." } }, additionalProperties: false },
     execute: namedTool,
+  },
+  {
+    name: "terminal_investigate",
+    label: "Investigate a company",
+    description: "On a mapped company map: investigate ONE company on it (a thin private one, an unnamed party like Customer A, or any tile). Sub-agents read the root's filings that name it, other filers' annual reports and 8-Ks that mention it, its own annual report, Wikipedia and recent headlines; a synthesis agent returns what it is, how it connects to the mapped company, headquarters, ownership, key facts, and new connected companies to add to the map.",
+    parameters: { type: "object", properties: { name: { type: "string", minLength: 2, maxLength: 120, description: "Company name as it appears on the map." }, ticker: { type: "string", maxLength: 10, description: "Ticker if the map shows one." } }, required: ["name"], additionalProperties: false },
+    execute: investigateTool,
   },
   {
     name: "terminal_changes",

@@ -27,6 +27,7 @@
       "terminal_named",
       "terminal_changes",
       "terminal_earnings",
+      "terminal_investigate",
       "terminal_commodity",
       "terminal_indexshock",
       "terminal_wire"
