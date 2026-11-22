@@ -1,0 +1,55 @@
+// Merged into the Pocket Terminal Gateway's own config (plugin/.state/openclaw.json) by run-gateway.sh.
+// Two providers: DeepSeek (testing) and Kimi K3.1 Pro on Cerebras (the hackathon model). The primary
+// model is set by plugin/use-model.sh (kimi|deepseek), not here. Only the Pocket Terminal tools
+// are exposed (no tool search), no background turns, no workspace bootstrap, loopback Gateway on 19789.
+{
+  agents: {
+    defaults: {
+      thinkingDefault: "low",
+      skipBootstrap: true,
+    },
+  },
+  models: {
+    mode: "merge",
+    providers: {
+      cerebras: {
+        baseUrl: "https://api.cerebras.ai/v1",
+        api: "openai-completions",
+        apiKey: "${CEREBRAS_API_KEY}",
+        models: [
+          {
+            id: "moonshotai-kimi-k3.1-pro-trial",
+            name: "Kimi K3.1 Pro (Cerebras)",
+            reasoning: true,
+            input: ["text", "image"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            compat: { supportsTools: true, supportsStrictMode: false, supportsReasoningEffort: true, supportedReasoningEfforts: ["low", "high", "max"] },
+          },
+        ],
+      },
+      deepseek: {
+        baseUrl: "https://api.deepseek.com/v1",
+        api: "openai-completions",
+        apiKey: "${DEEPSEEK_API_KEY}",
+        models: [
+          {
+            id: "deepseek-flash",
+            name: "DeepSeek Flash",
+            reasoning: false,
+            input: ["text"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            // thinking off: fast tool turns, and no reasoning_content to round-trip
+            params: { thinking: { type: "disabled" } },
+            compat: { supportsTools: true, supportsStrictMode: false },
+          },
+        ],
+      },
+    },
+  },
+  tools: { toolSearch: false, profile: "minimal", alsoAllow: ["terminal_scan", "terminal_spawn", "terminal_expand", "terminal_news", "terminal_profiles", "terminal_resolve", "terminal_private", "terminal_whatif", "terminal_named", "terminal_changes", "terminal_earnings", "terminal_commodity", "terminal_indexshock", "terminal_wire"] },
+  cron: { enabled: false },
+  // Don't advertise this second Gateway on the LAN (mDNS) next to the default one.
+  // pocket-terminal reads llm_output (the agent's text between tool calls) for the page's trajectory view
+  plugins: { entries: { bonjour: { enabled: false }, "pocket-terminal": { hooks: { allowConversationAccess: true } } } },
+  gateway: { mode: "local", port: 19789, bind: "loopback", auth: { mode: "token" } },
+}

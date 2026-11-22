@@ -1,0 +1,15 @@
+{
+  "name": "openclaw-plugin-pocket-terminal",
+  "version": "0.1.0",
+  "description": "OpenClaw plugin: the terminal_* tools an agent orchestrates its sub-agent waves with, and the /terminal live graph page.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "files": ["index.js", "skills", "openclaw.plugin.json"],
+  "peerDependencies": { "openclaw": ">=2026.5.17" },
+  "openclaw": {
+    "extensions": ["./index.js"],
+    "compat": { "pluginApi": ">=2026.5.17" },
+    "build": { "openclawVersion": "2026.11.6" }
+  }
+}

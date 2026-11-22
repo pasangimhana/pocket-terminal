@@ -1,0 +1,28 @@
+# secrets and this machine's settings
+.env
+.env.*
+!.env.example
+
+# local state, installs and caches
+plugin/.state/
+plugin/.runtime/
+data/
+node_modules/
+*.log
+
+# recordings, screenshots and drafts
+record/*.mp4
+record/*.jpg
+record/.frames-*/
+proof/
+promo/
+post.md
+web/lab/
+
+# saved runs: only the sample runs are kept
+runs/*
+!runs/NVDA-cerebras-2026-11-22T18-11-47.json
+!runs/AMD-cerebras-2026-11-22T18-14-42.json
+!runs/NVDA-cerebras-2026-11-22T17-39-24.json
+!runs/AMD-cerebras-2026-11-22T17-45-38.json
+!runs/wire-2026-11-20.json

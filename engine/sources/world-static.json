@@ -1,0 +1,96 @@
+{
+  "_about": "Snapshots used by world.mjs. USGS: transcribed from the Mineral Commodity Summaries 2026 world production tables (pubs.usgs.gov PDFs) because the MCS data-release CSVs on ScienceBase/usgs.gov sit behind a bot challenge. Rows are [country, 2024, 2025]; null = none or withheld. WNA uranium is a fallback for the live page.",
+  "usgs": {
+    "edition": "Mineral Commodity Summaries 2026",
+    "published": "2026-02",
+    "urlBase": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-",
+    "years": [2024, 2025],
+    "commodities": {
+      "copper": {
+        "pdf": "copper",
+        "mine": {
+          "label": "Mine production", "unit": "thousand t (copper content)", "estimated": [2025],
+          "rows": [
+            ["United States", 1050, 1000], ["Australia", 765, 730], ["Canada", 515, 500], ["Chile", 5510, 5300],
+            ["China", 1840, 1800], ["Congo (Kinshasa)", 2990, 3200], ["India", 27, 23], ["Indonesia", 1010, 710],
+            ["Kazakhstan", 724, 710], ["Mexico", 717, 690], ["Peru", 2740, 2700], ["Poland", 400, 410],
+            ["Russia", 1020, 1300], ["Zambia", 823, 940]
+          ],
+          "other": [2850, 3000], "world": [23000, 23000]
+        },
+        "refinery": {
+          "label": "Refinery production", "unit": "thousand t (copper content)", "estimated": [2025],
+          "rows": [
+            ["United States", 921, 850], ["Australia", 434, 460], ["Canada", 324, 320], ["Chile", 1940, 1700],
+            ["China", 12400, 14000], ["Congo (Kinshasa)", 2560, 2800], ["Germany", 597, 610], ["India", 545, 620],
+            ["Indonesia", 349, 400], ["Japan", 1570, 1400], ["Kazakhstan", 498, 500], ["Korea, Republic of", 604, 610],
+            ["Mexico", 489, 480], ["Peru", 385, 340], ["Poland", 589, 560], ["Russia", 896, 950], ["Zambia", 189, 270]
+          ],
+          "other": [2310, 2100], "world": [27600, 29000]
+        }
+      },
+      "lithium": {
+        "pdf": "lithium",
+        "mine": {
+          "label": "Mine production", "unit": "t (lithium content)", "estimated": [2024, 2025],
+          "note": "United States withheld (W); the world total excludes U.S. production.",
+          "rows": [
+            ["United States", null, null], ["Argentina", 13800, 23000], ["Australia", 82700, 92000], ["Brazil", 10200, 12000],
+            ["Canada", 4820, 5600], ["Chile", 48900, 56000], ["China", 41400, 62000], ["Mali", 770, 9400],
+            ["Portugal", 380, 380], ["Zimbabwe", 20000, 28000]
+          ],
+          "other": [null, null], "world": [222000, 290000]
+        }
+      },
+      "gold": {
+        "pdf": "gold",
+        "mine": {
+          "label": "Mine production", "unit": "t (gold content)", "estimated": [2025],
+          "rows": [
+            ["United States", 163, 160], ["Australia", 284, 280], ["Brazil", 82, 80], ["Canada", 200, 200],
+            ["China", 377, 380], ["Ghana", 149, 150], ["Indonesia", 94, 90], ["Kazakhstan", 130, 130],
+            ["Mexico", 140, 140], ["Peru", 108, 110], ["Russia", 310, 310], ["South Africa", 90, 90], ["Uzbekistan", 129, 130]
+          ],
+          "other": [1020, 1000], "world": [3280, 3300]
+        }
+      },
+      "ironore": {
+        "pdf": "iron-ore",
+        "mine": {
+          "label": "Mine production (usable ore)", "unit": "thousand t (usable ore)", "estimated": [2025],
+          "rows": [
+            ["United States", 45100, 38000], ["Australia", 982000, 980000], ["Brazil", 428000, 420000], ["Canada", 70000, 69000],
+            ["Chile", 18000, 19000], ["China", 293000, 290000], ["India", 282000, 310000], ["Iran", 90000, 93000],
+            ["Kazakhstan", 37000, 35000], ["Mauritania", 14300, 15000], ["Mexico", 7800, 7700], ["Peru", 19800, 21000],
+            ["Russia", 91000, 86000], ["South Africa", 64000, 66000], ["Sweden", 25000, 26000], ["Turkey", 17000, 18000],
+            ["Ukraine", 54700, 52000]
+          ],
+          "other": [60700, 64000], "world": [2600000, 2600000]
+        }
+      },
+      "rareearths": {
+        "pdf": "rare-earths",
+        "mine": {
+          "label": "Mine production", "unit": "t (rare-earth-oxide equivalent)", "estimated": [2024, 2025],
+          "rows": [
+            ["United States", 45500, 51000], ["Australia", 29000, 29000], ["Brazil", 560, 2000], ["Burma", 27000, 22000],
+            ["China", 270000, 270000], ["India", 2900, 2900], ["Madagascar", 1400, 2700], ["Malaysia", 140, 110],
+            ["Nigeria", 1500, 1500], ["Russia", 2600, 2600], ["Thailand", 2100, 4800], ["Vietnam", 300, 150]
+          ],
+          "other": [1000, 550], "world": [380000, 390000]
+        }
+      }
+    }
+  },
+  "uranium": {
+    "source": "World Nuclear Association, World Uranium Mining Production",
+    "url": "https://world-nuclear.org/information-library/nuclear-fuel-cycle/mining-of-uranium/world-uranium-mining-production",
+    "unit": "t U", "year": 2024,
+    "rows": [
+      ["Kazakhstan", 23270], ["Canada", 14309], ["Namibia", 7333], ["Australia", 4598], ["Uzbekistan (est.)", 4000],
+      ["Russia", 2738], ["China (est.)", 1600], ["Niger", 962], ["India (est.)", 500], ["Ukraine (est.)", 288],
+      ["USA", 260], ["South Africa (est.)", 200]
+    ],
+    "other": 155, "world": 60213
+  }
+}

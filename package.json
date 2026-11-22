@@ -1,0 +1,17 @@
+{
+  "name": "pocket-terminal",
+  "version": "0.1.0",
+  "description": "A pocket Bloomberg terminal: an OpenClaw main agent on Kimi K3.1 Pro (Cerebras) spawns waves of sub-agents that read SEC filings and draw a live supply-chain graph.",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "gateway": "plugin/run-gateway.sh",
+    "kimi": "plugin/use-model.sh kimi",
+    "deepseek": "plugin/use-model.sh deepseek",
+    "record": "node record/record.mjs",
+    "bench": "python3 bench.py"
+  },
+  "devDependencies": { "playwright": "^1.59.1" }
+}

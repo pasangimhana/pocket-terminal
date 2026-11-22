@@ -1,0 +1,101 @@
+/* Pocket Terminal extras: streams, data blocks, shock rings, scenario slider, watchlist, analyst note */
+.pos { color: #46a758 !important; }
+.neg { color: #e5484d !important; }
+.dim { color: #71717a; }
+
+/* agent streams block */
+.xs-blk h4 span { color: #52525b; }
+.xs-g { display: grid; gap: 6px; margin-bottom: 8px; }
+.xs { display: grid; grid-template-columns: 18px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; background: #0f1311; border: 1px solid #1f2a23; border-radius: 9px; padding: 7px 10px; color: #e4e4e7; cursor: pointer; font: inherit; transition: border-color .15s, background .15s; }
+.xs:hover:not([disabled]) { border-color: #2f6b47; background: #0f1813; }
+.xs[disabled] { opacity: .45; cursor: default; }
+.xs .ic { grid-row: 1 / 3; color: #4ade80; }
+.xs b { font: 500 12.5px Geist, sans-serif; }
+.xs span { font: 400 10.5px Geist, sans-serif; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xt-g { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.xt { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; background: #111114; border: 1px solid #1f1f23; border-radius: 8px; padding: 6px 9px; color: #e4e4e7; cursor: pointer; font: inherit; text-decoration: none; text-align: left; transition: border-color .15s; }
+.xt:hover { border-color: #3f3f46; }
+.xt b { font: 500 11.5px Geist, sans-serif; }
+.xt span { font: 400 10px Geist, sans-serif; color: #71717a; }
+.xt.wide { width: 100%; }
+#modal .xt { display: inline-flex; margin: 8px 6px 0 0; }
+
+/* compact rows with bars */
+.xl { display: grid; gap: 4px; }
+.xr { display: grid; grid-template-columns: minmax(0, 1fr) 70px auto; align-items: center; gap: 8px; font: 400 11.5px Geist, sans-serif; color: #d4d4d8; cursor: default; }
+.xr[data-node] { cursor: pointer; }
+.xr span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.xr b { font: 500 11px 'Geist Mono', monospace; color: #e4e4e7; text-align: right; white-space: nowrap; }
+.xr em { font-style: normal; font-size: 10.5px; }
+.xl.big .xr { grid-template-columns: minmax(0, 1fr) 160px auto auto; font-size: 12.5px; padding: 3px 0; border-bottom: 1px solid #18181b; }
+.xb { display: block; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #22c55e, #15803d); justify-self: start; }
+.xb.neg { background: linear-gradient(90deg, #e5484d, #9b2c30); }
+.xm { font: 400 11px Geist, sans-serif; color: #8b8b94; margin-top: 6px; line-height: 1.4; }
+.xk { font: 400 11.5px Geist, sans-serif; color: #a1a1aa; display: flex; align-items: center; gap: 6px; padding: 6px 0; }
+.xk code { font: 500 11px 'Geist Mono', monospace; color: #86efac; background: #0f1813; border: 1px solid #1f3a2a; border-radius: 4px; padding: 0 4px; }
+.xk.dim { color: #71717a; }
+
+/* kpi strip inside blocks */
+.xkp { display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 6px; margin-bottom: 6px; }
+.xkp > div { min-width: 0; }
+.xkp b { display: block; font: 600 14px 'Geist Mono', monospace; color: #fafafa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xkp span { display: block; font: 400 10.5px Geist, sans-serif; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xkp em { font-style: normal; font-family: 'Geist Mono', monospace; }
+#modal .xkp { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+#modal .xkp > div { background: #111114; border: 1px solid #1f1f23; border-radius: 10px; padding: 8px 10px; }
+#modal .xkp b { font-size: 16px; }
+
+.tg .warnc { border-color: #4a2a2c; color: #f0a5a8; }
+.tg span b { font-family: 'Geist Mono', monospace; color: #fafafa; margin-left: 3px; }
+
+/* scenario slider */
+.xsl { display: flex; align-items: center; gap: 10px; }
+.xsl input[type=range] { flex: 1; accent-color: #22c55e; height: 4px; }
+.xsl b { font: 600 14px 'Geist Mono', monospace; color: #fafafa; width: 52px; text-align: right; }
+
+/* shock rings in the what-if results */
+.xringw { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: center; background: #0f0f12; border: 1px solid #1f1f23; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; }
+.xrings { width: 180px; height: 180px; }
+.xrt { font: 600 13px 'Geist Mono', monospace; fill: #fafafa; }
+.xrgs h6 { margin: 0 0 8px; font: 500 12px Geist, sans-serif; color: #e4e4e7; }
+.xrg { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto 90px; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid #18181b; font: 400 12px Geist, sans-serif; color: #d4d4d8; }
+.xrg b { font: 600 12px 'Geist Mono', monospace; color: #86efac; }
+.xrg em { font-style: normal; color: #71717a; font-size: 11px; }
+.xrg i { font: 600 13px 'Geist Mono', monospace; font-style: normal; text-align: right; }
+@media (max-width: 720px) { .xringw { grid-template-columns: 1fr; } .xrings { margin: 0 auto; } }
+
+/* popup bits */
+.xnb { background: #0f1311; border: 1px solid #1f2a23; border-radius: 10px; padding: 8px 10px; margin: 0 0 10px; font: 400 12.5px Geist, sans-serif; color: #d4d4d8; }
+.xnb .ic { color: #4ade80; vertical-align: -2px; }
+.xnb .lcs { margin-top: 6px; }
+.xch { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; padding: 5px 0; border-bottom: 1px solid #18181b; font: 400 12px Geist, sans-serif; color: #d4d4d8; }
+.xch b { font: 500 12px Geist, sans-serif; color: #fafafa; }
+.xch em { grid-column: 2; font-style: normal; font-size: 10.5px; color: #71717a; }
+.xch a { color: #d4d4d8; }
+.xtabs { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0 8px; }
+.xtabs button { background: #111114; border: 1px solid #1f1f23; color: #a1a1aa; border-radius: 999px; padding: 4px 11px; font: 500 11.5px Geist, sans-serif; cursor: pointer; }
+.xtabs button:hover { color: #e4e4e7; border-color: #3f3f46; }
+.xtabs button.on { color: #04110a; border-color: transparent; background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); }
+.xtab { background: #0d0d10; border: 1px solid #1c1c20; border-radius: 10px; padding: 10px 12px; }
+.xlg { width: 16px; height: 16px; border-radius: 4px; background: #fafafa; object-fit: contain; padding: 1px; vertical-align: -3px; margin-right: 6px; }
+.xbig { font: 600 22px 'Geist Mono', monospace; color: #fafafa; margin: 2px 0 6px; }
+.xbig span { font-size: 13px; margin-left: 6px; }
+.xnote { width: 100%; border-radius: 8px; border: 1px solid #1f1f23; display: block; }
+.xnb2 { display: flex; gap: 6px; }
+
+/* search rows for commodities / index maps / ETFs */
+.xsg .xmark { display: grid; place-items: center; font: 700 12px 'Geist Mono', monospace; color: #04110a; background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); border-radius: 8px; }
+.xsg .xmark.web, .xsg .xmark.etf, .xsg .xmark.compare, .xsg .xmark.memory, .xsg .xmark.wire { background: #18181b; color: #86efac; border: 1px solid #1f3a2a; font-size: 14px; }
+.xty { font: 500 10px 'Geist Mono', monospace; color: #4ade80; border: 1px solid #1f3a2a; border-radius: 999px; padding: 0 6px; margin-left: 6px; vertical-align: 1px; }
+
+/* watchlist toast */
+.xtoast { position: fixed; z-index: 60; left: 50%; top: 18px; transform: translate(-50%, -12px); opacity: 0; background: #0f1311; border: 1px solid #2f6b47; color: #e4e4e7; border-radius: 10px; padding: 9px 14px; font: 500 12.5px Geist, sans-serif; transition: opacity .3s, transform .3s; max-width: min(560px, 90vw); }
+.xtoast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* start screen: second row of pills for commodities, index maps, the wire and memory */
+#xpills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 10px; transition: opacity .4s; }
+#xpills button { display: inline-flex; align-items: center; gap: 7px; background: rgba(15, 19, 17, 0.7); border: 1px solid #1f2a23; color: #d4d4d8; border-radius: 999px; padding: 4px 12px 4px 4px; font: 500 12px Geist, sans-serif; cursor: pointer; transition: border-color .15s, color .15s; }
+#xpills button:hover { border-color: #2f6b47; color: #fafafa; }
+#xpills i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font: 700 9.5px 'Geist Mono', monospace; font-style: normal; color: #04110a; background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); }
+#xpills button:not(.commodity) i { background: #18181b; color: #86efac; border: 1px solid #1f3a2a; font-size: 12px; }
+body.running #xpills { display: none; }

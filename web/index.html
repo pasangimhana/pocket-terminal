@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="extra.css">
+<link rel="stylesheet" href="hop.css">
+<link rel="stylesheet" href="views.css">
+<link rel="stylesheet" href="wire.css">
+</head>
+<body>
+<canvas id="stars"></canvas>
+<canvas id="graph"></canvas>
+
+<div id="top">
+  
+  <div id="model" class="hidden"></div>
+</div>
+
+<div id="center">
+  <div id="box">
+    <div id="input-wrap">
+      <svg class="search" viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" autocomplete="off" spellcheck="false" placeholder="">
+      <kbd>↵</kbd>
+    </div>
+    <div id="suggest"></div>
+  </div>
+  <div id="pills"></div>
+  <div id="status"></div>
+</div>
+
+<div id="agents"></div>
+<div id="side"></div>
+<div id="tape"></div>
+<div id="tooltip"></div>
+<div id="chat" class="hidden">
+  <div id="chat-log"></div>
+  <div id="chat-ex"></div>
+  <div id="chat-in"><span class="ci-tag">What-if</span><input id="chat-q" autocomplete="off" spellcheck="false" placeholder="Ask what happens if… e.g. What if Taiwan is blockaded?"><button id="chat-go">Ask</button></div>
+</div>
+
+<div id="fkeys" class="hidden">
+  <button data-f="all" class="on"><kbd>1</kbd>All</button>
+  <button data-f="supplier"><kbd>2</kbd>Supply</button>
+  <button data-f="customer"><kbd>3</kbd>Customers</button>
+  <button data-f="competitor"><kbd>4</kbd>Rivals</button>
+  <button data-f="partner"><kbd>5</kbd>Partners</button>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="extra.js"></script>
+<script src="app.js"></script>
+<script src="hop.js"></script>
+<script src="views.js"></script>
+<script src="wire.js"></script>
+</body>
+</html>

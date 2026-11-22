@@ -1,0 +1,35 @@
+{
+  "id": "pocket-terminal",
+  "name": "Pocket Terminal",
+  "description": "Type a ticker, a commodity or an index: an OpenClaw main agent spawns waves of sub-agents that read SEC filings in parallel, and a live Bloomberg-style supply-chain graph grows at /terminal.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "skills": [
+    "./skills"
+  ],
+  "contracts": {
+    "tools": [
+      "terminal_scan",
+      "terminal_spawn",
+      "terminal_expand",
+      "terminal_news",
+      "terminal_profiles",
+      "terminal_resolve",
+      "terminal_private",
+      "terminal_whatif",
+      "terminal_named",
+      "terminal_changes",
+      "terminal_earnings",
+      "terminal_commodity",
+      "terminal_indexshock",
+      "terminal_wire"
+    ]
+  }
+}

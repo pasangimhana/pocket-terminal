@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Standard OpenClaw (npm openclaw@2026.11.6 in plugin/.runtime) for Pocket Terminal, fully isolated
+# from ~/.openclaw and any other Gateway: own home, state, config and token under plugin/.state, and
+# port 19789. Loads keys from the repo .env (and POCKET_EXTRA_ENV files) without printing them.
+# Usage: plugin/oc <openclaw args>     e.g. plugin/oc plugins list, plugin/oc agent --agent main -m "map NVDA"
+set -euo pipefail
+PLUGIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STATE="$PLUGIN/.state"
+OPENCLAW="$PLUGIN/.runtime/node_modules/openclaw/openclaw.mjs"
+PORT="${POCKET_PORT:-19789}"
+
+# Keys and settings: repo .env first, then each file in POCKET_EXTRA_ENV (colon-separated, ~ allowed).
+# A name is only taken from a file when it is not already set. Values are never printed.
+load_env() {
+  local f="$1" n v
+  f="${f/#\~/$HOME}"
+  [ -f "$f" ] || return 0
+  for n in CEREBRAS_API_KEY DEEPSEEK_API_KEY OPENROUTER_API_KEY OPENROUTER_KEY POCKET_NODE SEC_USER_AGENT POCKET_EXTRA_ENV; do
+    [ -z "${!n:-}" ] || continue
+    v="$(sed -n "s/^[[:space:]]*\(export[[:space:]]*\)\{0,1\}$n=//p" "$f" | head -1 | tr -d '\r"'"'"'')"
+    [ -z "$v" ] || export "$n=$v"
+  done
+}
+ENV_FILE="${POCKET_ENV_FILE:-$PLUGIN/../.env}"
+load_env "$ENV_FILE"
+IFS=':' read -ra EXTRA_ENV <<< "${POCKET_EXTRA_ENV:-}"
+for f in ${EXTRA_ENV[@]+"${EXTRA_ENV[@]}"}; do load_env "$f"; done
+export CEREBRAS_API_KEY="${CEREBRAS_API_KEY:-}" DEEPSEEK_API_KEY="${DEEPSEEK_API_KEY:-}"
+[ -n "$CEREBRAS_API_KEY" ] || echo "oc: CEREBRAS_API_KEY missing (copy .env.example to .env and set it)" >&2
+
+# Node: OpenClaw 2026.11.6 needs >=24.16 <25 or >=26.1 (brew's 25.x is out of range).
+node_ok() { "$1" -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit((a===24&&b>=16)||(a===26&&b>=1)||a>26?0:1)' 2>/dev/null; }
+NODE=""
+for c in "${POCKET_NODE:-}" "$(command -v node || true)"; do
+  if [ -n "$c" ] && [ -x "$c" ] && node_ok "$c"; then NODE="$c"; break; fi
+done
+[ -n "$NODE" ] || { echo "oc: need Node >=24.16 <25 or >=26.1 (set POCKET_NODE=/path/to/node)" >&2; exit 1; }
+[ -f "$OPENCLAW" ] || { echo "oc: OpenClaw not installed; run plugin/run-gateway.sh once (it installs openclaw@2026.11.6 into plugin/.runtime)" >&2; exit 1; }
+
+mkdir -p "$STATE/home" "$STATE/workspace" && chmod 700 "$STATE"
+# Which model drives both the OpenClaw agent and the engine's sub-agents (plugin/use-model.sh sets it).
+MODEL_CHOICE="$(cat "$STATE/model" 2>/dev/null || echo kimi)"
+case "$MODEL_CHOICE" in
+  deepseek) export PT_PROVIDER=deepseek ;;
+  *) export PT_PROVIDER=cerebras ;;
+esac
+TOKEN_FILE="$STATE/gateway-token"
+[ -s "$TOKEN_FILE" ] || (umask 077 && openssl rand -hex 24 > "$TOKEN_FILE")
+
+unset OPENCLAW_PROFILE
+export OPENCLAW_GATEWAY_TOKEN="$(cat "$TOKEN_FILE")"
+export OPENCLAW_HOME="$STATE/home"
+export OPENCLAW_STATE_DIR="$STATE"
+export OPENCLAW_CONFIG_PATH="$STATE/openclaw.json"
+export OPENCLAW_GATEWAY_PORT="$PORT"
+export POCKET_PAGE_URL="http://127.0.0.1:$PORT/terminal/"
+export POCKET_ENGINE_DIR="$(cd "$PLUGIN/.." && pwd)/engine"
+exec "$NODE" "$OPENCLAW" "$@"
