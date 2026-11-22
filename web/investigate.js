@@ -24,6 +24,7 @@ window.PTInvestigate = (() => {
     return { quotes, kind, thin: kind !== 'public' || quotes <= 1 };
   }
   function subLabel(n) {
+    if (n._invErr) return 'Failed: ' + String(n._invErr).slice(0, 90) + ' · retry';
     const t = thin(n);
     if (t.kind === 'unnamed') return `Unnamed party: ${t.quotes} quote${t.quotes === 1 ? '' : 's'}, who is it?`;
     if (t.kind === 'category') return `A category, not a company: ${t.quotes} quote${t.quotes === 1 ? '' : 's'}`;
@@ -153,13 +154,17 @@ window.PTInvestigate = (() => {
 
   async function start(n) {
     if (REPLAY || S.phase !== 'done') { setStatus('Wait for the current agents to finish'); return; }
-    n._invAt = Date.now(); LAST = n;
+    n._invAt = Date.now(); n._invErr = null; LAST = n;
     companyModal(n, true);
     const ctx = (n.quotes || []).filter(q => q.q && !isTableQuote(q.q)).slice(0, 3).map(q => q.q);
     if (!ctx.length) { const d = [n.detail, n.desc, n.guess?.length ? 'The filing agent guessed: ' + n.guess.join(', ') : ''].filter(Boolean).join('. '); if (d) ctx.push(`${n.name}: ${d}`); }
     const qs = ctx.map(q => '&q=' + enc(q.slice(0, 400))).join('');
     const r = await fetch(`api/investigate?name=${enc(n.name)}&ticker=${enc(n.ticker || '')}${qs}`).catch(() => null);
-    if (!r || !r.ok) { const j = r ? await r.json().catch(() => ({})) : {}; n._invAt = 0; setStatus(j.error || 'Could not start'); if (MODAL_NODE === n) companyModal(n, true); }
+    if (!r || !r.ok) {
+      const j = r ? await r.json().catch(() => ({})) : {};
+      n._invAt = 0; n._invErr = j.error || (r ? `HTTP ${r.status}${r.status === 404 ? ' (route missing)' : r.status === 409 ? ' (busy)' : ''}` : 'network error');
+      setStatus(n._invErr); if (MODAL_NODE === n) companyModal(n, true);
+    }
   }
 
   function targetOf(f, a) {

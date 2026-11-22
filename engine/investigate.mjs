@@ -10,9 +10,9 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  currentSession, runAgent, inputOf, pretty, shortName, norm, finishSession, reopen, needMap, runAgentTurn, mentionsOf,
+  currentSession, runAgent, inputOf, pretty, shortName, norm, finishSession, reopen, needMap, runAgentTurn, mentionsOf, itemsOf,
 } from './run.mjs';
-import { findTicker, cached, secGet } from './sec.mjs';
+import { findTicker, cached, secGet, latest10K, get10KText } from './sec.mjs';
 import { streamChat } from './llm.mjs';
 
 const DATA = path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), 'data');
@@ -42,6 +42,42 @@ async function gMentions(s, name) {
   const root = s.meta.short || pretty(s.meta.name);
   const refs = all.map(h => ({ label: h.source, url: s.meta.filing?.url || null }));
   return { key: 'mentions', label: `${shortName(root) || root}'s own filings`, refs, text: all.map((h, i) => `[${i + 1}] (${h.source}) ${h.text}`).join('\n\n').slice(0, 7000), url: null };
+}
+
+// Root filing context for unnamed / category / thin names: paragraphs around the tile's quotes, plus paragraphs that hit the name's keywords.
+const STOP = new Set('the a an and or of in on for to with by from as at its their our other certain strategic major key various some any new large largest top main primary significant'.split(' '));
+const stem = w => w.length > 4 && w.endsWith('ies') ? w.slice(0, -3) + 'y' : w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w;
+async function ensureItems(s) {
+  if (Object.keys(s.meta.items || {}).length || !s.meta.cik) return;
+  try {
+    const f = s.meta.filing || await latest10K(s.meta.cik);
+    if (!f) return;
+    s.meta.items = itemsOf(await get10KText(f, s.meta.cik), f.form);
+    s.meta.filing ||= f;
+  } catch {}
+}
+async function gContext(s, name) {
+  const items = s.meta.items || {};
+  const paras = [];
+  for (const k of Object.keys(items)) for (const p of String(items[k] || '').split(/\n\s*\n|\n(?=[A-Z])/).map(x => x.replace(/\s+/g, ' ').trim()).filter(x => x.length > 40)) paras.push({ k, p });
+  if (!paras.length) return null;
+  const quotes = (s.invCtx?.get(norm(name)) || []).map(q => tidy(q).toLowerCase()).filter(q => q.length > 25);
+  const kw = [...new Set(tidy(name).toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2 && !STOP.has(w)).map(stem))];
+  const pick = new Set();
+  paras.forEach(({ p }, i) => {
+    const lp = p.toLowerCase();
+    if (quotes.some(q => lp.includes(q.slice(0, 60)) || q.includes(lp.slice(0, 60)))) for (let j = Math.max(0, i - 2); j <= Math.min(paras.length - 1, i + 2); j++) pick.add(j);
+    if (kw.length && kw.filter(w => lp.includes(w)).length >= 2) pick.add(i);
+  });
+  if (!pick.size) return null;
+  let text = '';
+  for (const i of [...pick].sort((a, b) => a - b)) { const add = `[Item ${paras[i].k}] ${paras[i].p}\n\n`; if (text.length + add.length > 7000) break; text += add; }
+  const root = s.meta.short || s.meta.ticker;
+  return text.trim() ? { key: 'context', label: `${root} 10-K context`, url: s.meta.filing?.url || null, text: text.trim() } : null;
+}
+function gMap(s) {
+  const rows = (s.candidates || []).slice(0, 40).map(c => `${c.name}${c.ticker ? ' (' + c.ticker + ')' : ''}: ${[...(c.rels || [])].join('/') || 'connected'}${c.count ? ', ' + c.count + ' mentions' : ''}`);
+  return rows.length ? { key: 'map', label: `Companies on the ${s.meta.short || s.meta.ticker} map`, url: null, text: rows.join('\n') } : null;
 }
 
 async function gFiled(s, name, ownCik) {
@@ -129,9 +165,9 @@ Output ONE JSON line and nothing else:
 {"k":"enrich","name":${JSON.stringify(name)},"ticker":${JSON.stringify(ticker || null)},"what":"<max 16 words: what it is>","relationship":{"rel":"customer|supplier|competitor|partner|investor|subsidiary|parent|other","toRoot":"<max 18 words: how it connects to ${rootShort}>","evidence":"<verbatim quote from the sources, or empty>","confidence":"high|medium|low"},"hq":"<city, country or null>","ownership":"public|private|subsidiary of <X>|government|null","parent":"<parent company or null>","employees":"<e.g. ~25K or null>","revenue":"<e.g. ~$8.1B or null>","products":["<max 6>"],"customers":["<max 6 names>"],"suppliers":["<max 6 names>"],"competitors":["<max 6 names>"],"risks":["<max 5, each max 8 words>"],"facts":[{"name":"Founded","value":"1846"}],"identity":[{"name":"<company>","ticker":"<ticker or null>","confidence":"high|medium|low","why":"<max 14 words>"}]}
 Then 0 to 4 lines for OTHER companies that connect to ${rootShort} itself (its customers, suppliers, competitors or partners, e.g. a parent or unit of ${name} that ${rootShort}'s filings name) and are worth adding to its map, but ONLY companies that the sources actually name (no guesses from general knowledge). Never add ${name}'s own rivals, and never ${rootShort}:
 {"k":"lead","name":"<company>","ticker":"<ticker or null>","rel":"customer|supplier|competitor|partner","why":"<max 14 words>"}
-Rules: only what the sources state; use null for unknown fields and [] for empty lists; write "~" instead of "approximately". ticker only for a US listing or ADR you are sure of: if ${name} is public, or a subsidiary of a public company, give that ticker (put the parent's ticker in "ticker" only when ${name} itself has none and say so in "parent"). ${unnamed ? `${name} is an unnamed party or a category: fill "identity" with your best 1 to 3 candidates (with tickers) and a confidence each, from the evidence.` : 'identity must be [].'} Be honest: if the sources say little, say "low" confidence.`;
+Rules: only what the sources state; use null for unknown fields and [] for empty lists; write "~" instead of "approximately". ticker only for a US listing or ADR you are sure of: if ${name} is public, or a subsidiary of a public company, give that ticker (put the parent's ticker in "ticker" only when ${name} itself has none and say so in "parent"). ${unnamed ? `${name} is an unnamed party or a category: fill "identity" with your best 1 to 3 candidates (with tickers) and a confidence each. For this field only you MAY use well-known public facts plus the "Companies on the map" list (prefer a company already on the map when it fits the quotes; for a plural group such as "Strategic AI partners" up to 5 members is fine). Say in "why" what supports each.` : 'identity must be [].'} Be honest: if the sources say little, say "low" confidence.`;
   const rep = found.length ? found.map(f => `- [${f.label}] ${f.says}${f.q ? ` — "${f.q}"` : ''}`).join('\n') : '(the source agents found nothing)';
-  const raw = bundles.map(b => `### ${b.label}\n${b.text.slice(0, 1800)}`).join('\n\n');
+  const raw = bundles.map(b => `### ${b.label}\n${b.text.slice(0, b.key === 'map' ? 3000 : 1800)}`).join('\n\n');
   return [{ role: 'system', content: system }, { role: 'user', content: `SOURCE AGENT FINDINGS:\n${rep}\n\nSOURCE TEXT (trimmed):\n${raw}` }];
 }
 
@@ -153,7 +189,11 @@ export async function investigate({ name, ticker } = {}) {
   const own = ticker ? await findTicker(ticker).catch(() => null) : null;
 
   // gather every source at once; a slow or failing one just drops out
+  await withTimeout(ensureItems(s), 90000);
   const jobs = [withTimeout(gMentions(s, name), 15000)];
+  const thinNamed = !unnamed && !(s.invCtx?.get(norm(name)) || []).length;
+  if (unnamed || thinNamed) jobs.push(gContext(s, name));
+  if (unnamed) jobs.push(gMap(s));
   if (!unnamed) jobs.push(withTimeout(gFiled(s, name, own?.cik), 60000), withTimeout(gOwn(s, name, ticker), 70000), withTimeout(gWiki(name), 20000), withTimeout(gHeadlines(name), 20000));
   const bundles = (await Promise.all(jobs)).flat().filter(b => b && b.text && b.text.trim().length > 20);
   s.emit({ type: 'status', text: `${bundles.length} sources on ${name}: one agent each, then one to synthesise` });
